@@ -9,6 +9,8 @@ namespace Medilink.Interfaces
         Task<bool> UpdateInsumo(Insumo insumo);
         Task<bool> RestarCantidad(int id, int cantidad);
         Task<bool> DeleteInsumo(int id);
+
+        Task<Insumo> PedidoInsumos(Insumo insumo, string presentacion, string unidadMedida, string prioridad);
     }
 }
 

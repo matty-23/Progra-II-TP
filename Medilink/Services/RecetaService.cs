@@ -16,13 +16,21 @@ namespace Medilink.Services
         }
         
         public async Task<IEnumerable<Receta>> GetRecetas()
-        {
-            return await _dbContext.Recetas.ToListAsync();
-        }
+{
+    return await _dbContext.Recetas
+        .Include(r => r.RecetaMedicamentos)
+            .ThenInclude(rm => rm.Medicamento)
+        .ToListAsync();
+}
+
         public async Task<Receta> GetReceta(int id)
-        {
-            return await _dbContext.Recetas.FindAsync(id);
-        }
+{
+    return await _dbContext.Recetas
+        .Include(r => r.RecetaMedicamentos)         // incluye la tabla intermedia
+            .ThenInclude(rm => rm.Medicamento)      // incluye los medicamentos ligados a esa tabla
+        .FirstOrDefaultAsync(r => r.Id == id);
+}
+
         public async Task<Receta> AddReceta(Receta receta, int idConsulta)
 {
     var consulta = await _dbContext.Consultas.FindAsync(idConsulta);

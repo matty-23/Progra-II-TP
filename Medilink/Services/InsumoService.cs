@@ -6,7 +6,8 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
-
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc;
 namespace Medilink.Services
 {
     public class InsumoService : IInsumoService
@@ -19,18 +20,25 @@ namespace Medilink.Services
             _httpClient = httpClient;
         }
         public async Task<Insumo> AddInsumo(Insumo insumo)
-        {
-            var insumoInventario = await GetInsumo(insumo.Id);
-            if (insumoInventario != null)
-            {
-                insumoInventario.cantidadInventario += insumo.cantidadInventario;
-                await _context.SaveChangesAsync();
-                return insumoInventario;
-            }
-            await _context.Insumos.AddAsync(insumo);
-            await _context.SaveChangesAsync();
-            return insumo;
-        }
+{
+    // Buscar insumo por código (único o identificador alternativo)
+    var insumoInventario = await _context.Insumos
+        .FirstOrDefaultAsync(i => i.Codigo == insumo.Codigo);
+
+    if (insumoInventario != null)
+    {
+        // Si existe, sumar cantidad
+        insumoInventario.cantidadInventario += insumo.cantidadInventario;
+        await _context.SaveChangesAsync();
+        return insumoInventario;
+    }
+
+    // Si no existe, agregar nuevo insumo
+    await _context.Insumos.AddAsync(insumo);
+    await _context.SaveChangesAsync();
+    return insumo;
+}
+
 
         public async Task<bool> RestarCantidad(int id, int cantidad)
         {
@@ -80,7 +88,7 @@ namespace Medilink.Services
             }
         }
 
-        public async Task<bool> PedidoInsumos(Insumo ins, string presentacion, string unidadMedida, string prioridad)
+        public async Task<Insumo> PedidoInsumos(Insumo ins, string presentacion, string unidadMedida, string prioridad)
         {
 
             List<EnviarPedido> items = new List<EnviarPedido>();
@@ -113,21 +121,21 @@ namespace Medilink.Services
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             //Falta hacer las pruebas para conectarse
-            var response = await _httpClient.PostAsync("https://api.proveedor.com/pedidos", content);
+            var response = await _httpClient.PostAsync("https://localhost:5000/api/reposiciones/pedidos", content);
 
             if (!response.IsSuccessStatusCode)
-                return false;
+                return null;
             //Arreglar que efectivamente sea asi
             var respuestaJson = await response.Content.ReadAsStringAsync();
             var respuesta = JsonSerializer.Deserialize<RespuestaPedido>(respuestaJson);
 
             if (respuesta.Status == "REJECTED")
-                return false;
+                return null;
 
             insumo.cantidadInventario += respuesta.TotalConfirmado;
             await _context.SaveChangesAsync();
 
-            return true;
+            return  insumo;
 
         }
     }

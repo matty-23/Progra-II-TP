@@ -1,5 +1,5 @@
 namespace Medilink.Models;
-public abstract class Insumo
+public class Insumo
 {
     public int Id { get; set; }
     public string Codigo { get; set; }

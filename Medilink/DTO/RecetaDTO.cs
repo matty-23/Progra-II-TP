@@ -33,6 +33,8 @@ public record MedicamentoRecetaDto(
     int Cantidad,
     string Descripcion
 );
+
+// ✅ DTO PARA VALIDAR RECETA CON FIRMA
 public class RecetaConFirmaDto
 {
     public Receta Receta { get; set; } = null!;
